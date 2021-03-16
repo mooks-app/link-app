@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html style="overflow-y: hidden;">
+<head>
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Material+Icons" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+</head>
+<body>
+<div id="app">
+<v-app>
+    <v-card
+    class="pa-12"
+    color="grey lighten-3"
+    flat
+    style="border-radius: 0%; height: 100vh; padding: 10px!important; display: flex;"
+    >
+
+    <!-- Leftバー -->
+    <v-card
+        elevation="12"
+        width="256"
+        style="height: 100%; margin-left: 5px;"
+        id="myleft-bar"
+    >
+        <v-list
+            dense
+            rounded
+            flat
+            v-model="selectedPage"
+        >
+            <v-list-item
+                v-for="(item, i) in items"
+                :key="i"
+                v-on:click="nav_item_activate_click"
+                class="my-left-menu-item"
+            >
+                <v-list-item-icon>
+                    <v-icon v-text="item.icon"></v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                    <v-list-item-title v-text="item.title"></v-list-item-title>
+                </v-list-item-content>
+            </v-list-item>
+
+            <v-list-item
+                v-on:click="save_setting_js" 
+                class="my-left-menu-item"
+            >
+                <!-- 設定保存ボタン -->
+                <v-list-item-icon>
+                    <v-icon>save_alt</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                    <v-list-item-title>設定保存</v-list-item-title>
+                </v-list-item-content>
+            </v-list-item>
+        </v-list>
+    </v-card>
+    <!-- Left バー end -->
+
+    <!-- ---------------------------------------------------------------------------------------------------------------------------------------------------- -->
+    <!-- コンテンツ領域 -->
+    <div id="my-contents" style="margin-left: 20px; height: 100%; width: 100%; overflow-y: auto; display: flex;">
+
+<!-- ---------------------------------------------------------------------------------------------------------------------------------------------------- -->
+<!-- Item1: Todoリスト -->
+<v-card id="app-item-1" class="myapp-item" style="width: 100%; padding: 20px;">
+    <h1>チュートリアルToDoリスト</h1>
+
+    <!-- ★STEP11 -->
+    <label v-for="label in options" >
+      <input type="radio"
+        v-model="current"
+        v-bind:value="label.value">{{ label.label }}
+    </label>
+      
+    <!-- ★STEP12 -->
+    （{{ computedTodos.length }} 件を表示）
+
+    <!-- ★STEP4 リスト用テーブル -->
+    <v-simple-table>
+        <template v-slot:default>
+            <!-- <table> -->
+            <thead v-pre>
+                <tr>
+                <th class="id">ID</th>
+                <th class="comment">コメント</th>
+                <th class="state">状態</th>
+                <th class="button">-</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- ★STEP5 ToDo の要素をループ -->
+                <tr
+                v-for="item in computedTodos"
+                v-bind:key="item.id"
+                v-bind:class="{done:item.state}">
+                <th>{{ item.id }}</th>
+                <td>{{ item.comment }}</td>
+                <td class="state">
+                    <!-- ★STEP10 状態変更ボタン -->
+                    <button v-on:click="doChangeState(item)">
+                    {{ labels[item.state] }}
+                    </button>
+                </td>
+                <td class="button">
+                    <!-- ★STEP10 削除ボタン -->
+                    <button v-on:click.ctrl="doRemove(item)">
+                    削除
+                    </button>
+                </td>
+                </tr>
+            </tbody>
+        </template>
+    </v-simple-table>
+    <!-- </table> -->
+    <p>※削除ボタンはコントロールキーを押しながらクリックして下さい</p>
+
+    <!-- ★STEP6 -->
+    <h2 style="margin-top: 20px; margin-bottom: 10px;">新しい作業の追加</h2>
+    <form class="add-form" v-on:submit.prevent="doAdd">
+      <!-- コメント入力フォーム -->
+      <v-text-field label="コメント" type="text"></v-text-field>
+      <!-- <input type="text" ref="comment"> -->
+      <!-- 追加ボタンのモック -->
+      <!-- <button type="submit">追加</button> -->
+      <v-btn
+        type="submit"
+        depressed
+        color="primary"
+      >
+        追加
+      </v-btn>
+    </form>
+</v-card>
+<!-- item1: Todoリスト - end -->
+<!-- ---------------------------------------------------------------------------------------------------------------------------------------------------- -->
+<!-- ---------------------------------------------------------------------------------------------------------------------------------------------------- -->
+<!-- Item2: サイト一覧 -->
+<v-card id="app-item-2" class="myapp-item" style="width: 100%;">
+    <v-toolbar
+        color="cyan"
+        dark
+        flat
+        class="link-table-header"
+    >
+    <v-toolbar-title>Links</v-toolbar-title>
+
+    <template v-slot:extension>
+        <v-tabs
+            v-model="tab"
+            align-with-title
+        >
+        <v-tabs-slider color="yellow"></v-tabs-slider>
+        <v-tab
+            v-for="tab in tabs"
+            :key="tab.name"
+            @click.right.prevent="link_tab_delete"
+        >
+            {{ tab.name }}
+        </v-tab>
+        <v-tab style="background-color: #1976d2 !important; padding: 0;">
+            <v-row justify="center" style="height: 100%; width: 100%; margin: 0;">
+                <v-dialog
+                v-model="dialog"
+                persistent
+                max-width="290"
+                >
+                <template v-slot:activator="{ on, attrs }">
+                    <v-btn
+                        color="transparent"
+                        depressed
+                        dark
+                        small
+                        v-bind="attrs"
+                        v-on="on"
+                        style="height: 100%; width: 100%;"
+                    >
+                    <v-icon>mdi-plus</v-icon>
+                    </v-btn>
+                </template>
+                <v-card>
+                    <v-card-title class="headline">
+                    タブを追加します
+                    </v-card-title>
+                    <v-card-text>
+                        追加するタブ名を入力してください。
+                        <v-text-field
+                            label="タブ名"
+                            placeholder="タブ名を入力してください"
+                            outlined
+                            style="margin-top: 10px;"
+                            class="link-tab-add-input"
+                        ></v-text-field>
+                    </v-card-text>
+                    
+                    <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn
+                        color="blue darken-1"
+                        text
+                        @click="dialog = false"
+                    >
+                        キャンセル
+                    </v-btn>
+                    <v-btn
+                        color="blue darken-1"
+                        text
+                        @click="link_tab_add"
+                    >
+                        追加する
+                    </v-btn>
+                    </v-card-actions>
+                </v-card>
+                </v-dialog>
+            </v-row>
+
+        </v-tab>
+        </v-tabs>
+    </template>
+    </v-toolbar>
+
+    <v-tabs-items v-model="tab">
+        <v-tab-item
+            v-for="tab in tabs"
+            :key="tab.name"
+            style="height: 100%;"
+        >
+            <!-- リンク集 -->
+            <v-card
+                tile
+                style="width: 100%; height: 100%;"
+            >
+                <v-list 
+                    flat
+                    rounded
+                    style="height: calc(100% - 56px); overflow-y: auto;"
+                >
+                    <v-list-item
+                        v-for="(item, i) in tab.links"
+                        :key="i"
+                        link
+                    >
+                        <v-list-item-icon>
+                            <v-icon v-text="item.icon" class="link-item-icons" v-on:mouseover="link_site_icon_hover" v-on:mouseout="link_site_icon_mouseout" v-on:click="link_site_delete"></v-icon>
+                        </v-list-item-icon>
+                        <v-list-item-content style="height: 48px;position: relative;">
+                            <a v-text="item.text"
+                                :href="item.url"
+                                target="_blank"
+                                style="display: block; height: 100%; width: 100%; line-height: 48px;position: absolute; top:0; left: 0; text-decoration: none; color:rgba(0,0,0,.87)!important"
+                            >
+                            </a>
+                        </v-list-item-content>
+                    </v-list-item>
+                </v-list>
+
+                <div class="link-item-inputs" style="height: 56px; padding: 8px; display: flex;">
+                    <v-select
+                        :items="material_icons"
+                        label="Icon"
+                        outlined
+                        rounded
+                        dense
+                        v-model='link_input_icon'
+                        @click="link_site_input_icon_show"
+                    >
+                    </v-select>
+                    <v-text-field
+                        label="サイト名"
+                        placeholder="登録するサイト名を入力"
+                        outlined
+                        rounded
+                        dense
+                        style="margin-left: 15px;"
+                        v-on:keyup.enter="link_site_add_btn_event"
+                    ></v-text-field>
+                    <v-text-field
+                        label="サイト URL"
+                        placeholder="登録するURLを入力"
+                        rounded
+                        outlined
+                        dense
+                        style="margin-left: 15px;"
+                        v-on:keyup.enter="link_site_add_btn_event"
+                    ></v-text-field>
+                    <!-- <v-btn
+                        class="mx-2"
+                        fab
+                        dark
+                        color="indigo"
+                        small
+                        v-on:click="link_site_add_btn_event"
+                    >
+                        <v-icon dark>mdi-plus</v-icon>
+                    </v-btn> -->
+                </div>
+
+            </v-card>
+        </v-tab-item>
+        <v-tab-item></v-tab-item><!-- これがないと[+]ボタンタブ用のv-tab-itemの数が合わないから追加できない -->
+    </v-tabs-items>
+
+    
+    <v-dialog
+    v-model="dialog2"
+    max-width="290"
+    persistent>
+        <!-- タブの削除確認用のダイアログ -->
+        <v-card>
+        <v-card-title>確認</v-card-title>
+        <v-card-text>タブを削除します。</v-card-text>
+        <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn @click="link_tab_delete_sel('ok')">実行</v-btn>
+            <v-btn @click="link_tab_delete_sel('can')">キャンセル</v-btn>
+            <v-spacer></v-spacer>
+        </v-card-actions>
+        </v-card>
+    </v-dialog>
+</v-card>
+<!-- item2: サイト一覧 - end -->
+<!-- ---------------------------------------------------------------------------------------------------------------------------------------------------- -->
+<!-- Item3: ファイル一覧 -->
+<v-card id="app-item-3" class="myapp-item" style="width: 100%;">
+    <v-toolbar
+        color="cyan"
+        dark
+        flat
+        class="link-table-header"
+    >
+    <v-toolbar-title>FileLink</v-toolbar-title>
+
+    <template v-slot:extension>
+        <v-tabs
+            v-model="ftab"
+            align-with-title
+        ><!-- v-model="対応するタブアイテムリストでも同一の値を指定する" -->
+        <v-tabs-slider color="yellow"></v-tabs-slider>
+        <v-tab
+            v-for="tab in ftabs"
+            :key="tab.name"
+            @click.right.prevent="link_tab_delete"
+        >
+            {{ tab.name }}
+        </v-tab>
+        <v-tab style="background-color: #1976d2 !important; padding: 0;">
+            <v-row justify="center" style="height: 100%; width: 100%; margin: 0;">
+                <v-dialog
+                v-model="file_tab_dialog"
+                persistent
+                max-width="290"
+                >
+                <template v-slot:activator="{ on, attrs }">
+                    <v-btn
+                        color="transparent"
+                        depressed
+                        dark
+                        small
+                        v-bind="attrs"
+                        v-on="on"
+                        style="height: 100%; width: 100%;"
+                    >
+                    <v-icon>mdi-plus</v-icon>
+                    </v-btn>
+                </template>
+                <v-card>
+                    <v-card-title class="headline">
+                    タブを追加します
+                    </v-card-title>
+                    <v-card-text>
+                        追加するタブ名を入力してください。
+                        <v-text-field
+                            label="タブ名"
+                            placeholder="タブ名を入力してください"
+                            outlined
+                            style="margin-top: 10px;"
+                            class="file-tab-add-input"
+                        ></v-text-field>
+                    </v-card-text>
+                    
+                    <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn
+                        color="blue darken-1"
+                        text
+                        @click="file_tab_dialog = false"
+                    >
+                        キャンセル
+                    </v-btn>
+                    <v-btn
+                        color="blue darken-1"
+                        text
+                        @click="link_tab_add"
+                    >
+                        追加する
+                    </v-btn>
+                    </v-card-actions>
+                </v-card>
+                </v-dialog>
+            </v-row>
+
+        </v-tab>
+        </v-tabs>
+    </template>
+    </v-toolbar>
+
+    <v-tabs-items v-model="ftab">
+        <v-tab-item
+            v-for="tab in ftabs"
+            :key="tab.name"
+            style="height: 100%;"
+        >
+            <!-- リンク集 -->
+            <v-card
+                tile
+                style="width: 100%; height: 100%;"
+            >
+                <v-list 
+                    flat
+                    rounded
+                    style="height: calc(100% - 56px); overflow-y: auto;"
+                >
+                    <v-list-item
+                        v-for="(item, i) in tab.links"
+                        :key="i"
+                        link
+                    >
+                        <v-list-item-icon>
+                            <v-icon v-text="item.icon" class="link-item-icons" v-on:mouseover="link_site_icon_hover" v-on:mouseout="link_site_icon_mouseout" v-on:click="link_site_delete"></v-icon>
+                        </v-list-item-icon>
+                        <v-list-item-content style="height: 48px;position: relative;">
+                            <a v-text="item.text"
+                                :href="item.url"
+                                target="_blank"
+                                style="display: block; height: 100%; width: 100%; line-height: 48px;position: absolute; top:0; left: 0; text-decoration: none; color:rgba(0,0,0,.87)!important"
+                            >
+                            </a>
+                        </v-list-item-content>
+                    </v-list-item>
+                </v-list>
+
+                <div class="link-item-inputs" style="height: 56px; padding: 8px; display: flex;">
+                    <v-select
+                        :items="material_icons"
+                        label="Icon"
+                        outlined
+                        rounded
+                        dense
+                        v-model='link_input_icon'
+                        @click="link_site_input_icon_show"
+                    >
+                    </v-select>
+                    <v-text-field
+                        label="サイト名"
+                        placeholder="登録するサイト名を入力"
+                        outlined
+                        rounded
+                        dense
+                        style="margin-left: 15px;"
+                        v-on:keyup.enter="link_site_add_btn_event"
+                        ></v-text-field>
+                    <v-text-field
+                        label="サイト URL"
+                        placeholder="登録するURLを入力"
+                        rounded
+                        outlined
+                        dense
+                        style="margin-left: 15px;"
+                        v-on:keyup.enter="link_site_add_btn_event"
+                    ></v-text-field>
+                </div>
+
+            </v-card>
+        </v-tab-item>
+        <v-tab-item></v-tab-item><!-- これがないと[+]ボタンタブ用のv-tab-itemの数が合わないから追加できない -->
+    </v-tabs-items>
+
+    
+    <v-dialog
+    v-model="dialog3"
+    max-width="290"
+    persistent>
+        <!-- タブの削除確認用のダイアログ -->
+        <v-card>
+        <v-card-title>確認</v-card-title>
+        <v-card-text>タブを削除します。</v-card-text>
+        <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn @click="link_tab_delete_sel('ok')">実行</v-btn>
+            <v-btn @click="link_tab_delete_sel('can')">キャンセル</v-btn>
+            <v-spacer></v-spacer>
+        </v-card-actions>
+        </v-card>
+    </v-dialog>
+</v-card>
+<!-- item3: ファイル一覧 - end -->
+<!-- ---------------------------------------------------------------------------------------------------------------------------------------------------- -->
+
+
+
+    </div>    
+    <!-- コンテンツ領域 - end -->
+    <!-- ---------------------------------------------------------------------------------------------------------------------------------------------------- -->
+
+</v-card>
+</v-app>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+<script>
+// JSON
+material_icons_json = '["3d_rotation", "accessibility", "accessibility_new", "accessible", "accessible_forward", "account_balance", "account_balance_wallet", "account_box", "account_circle", "add_shopping_cart", "add_task", "add_to_drive", "addchart", "admin_panel_settings", "alarm", "alarm_add", "alarm_off", "alarm_on", "all_inbox", "all_out", "analytics", "anchor", "android", "announcement", "api", "app_blocking", "arrow_circle_down", "arrow_circle_up", "arrow_right_alt", "article", "aspect_ratio", "assessment", "assignment", "assignment_ind", "assignment_late", "assignment_return", "assignment_returned", "assignment_turned_in", "autorenew", "backup", "backup_table", "batch_prediction", "book", "book_online", "bookmark", "bookmark_add", "bookmark_added", "bookmark_border", "bookmark_remove", "bookmarks", "bug_report", "build", "build_circle", "cached", "calendar_today", "calendar_view_day", "calendar_view_month", "calendar_view_week", "camera_enhance", "cancel_schedule_send", "card_giftcard", "card_membership", "card_travel", "change_history", "check_circle", "check_circle_outline", "chrome_reader_mode", "f", "class", "close_fullscreen", "code", "code_off", "comment_bank", "commute", "compare_arrows", "compress", "contact_page", "contact_support", "contactless", "copyright", "credit_card", "credit_card_off", "dangerous", "dashboard", "dashboard_customize", "date_range", "delete", "delete_forever", "delete_outline", "description", "disabled_by_default", "dns", "done", "done_all", "done_outline", "donut_large", "donut_small", "drag_indicator", "dynamic_form", "eco", "edit_off", "eject", "euro_symbol", "event", "event_seat", "exit_to_app", "expand", "explore", "explore_off", "extension", "extension_off", "face", "fact_check", "favorite", "favorite_border", "feedback", "file_present", "filter_alt", "find_in_page", "find_replace", "fingerprint", "fit_screen", "flaky", "flight_land", "flight_takeoff", "flip_to_back", "flip_to_front", "flutter_dash", "g_translate", "gavel", "get_app", "gif", "grade", "grading", "group_work", "help", "help_center", "help_outline", "hide_source", "highlight_alt", "highlight_off", "history", "history_toggle_off", "home", "horizontal_split", "hourglass_disabled", "hourglass_empty", "hourglass_full", "http", "https", "important_devices", "info", "input", "integration_instructions", "invert_colors", "label", "label_important", "label_off", "language", "launch", "leaderboard", "lightbulb", "line_style", "line_weight", "list", "lock", "lock_clock", "lock_open", "login", "logout", "loyalty", "manage_accounts", "mark_as_unread", "markunread_mailbox", "maximize", "mediation", "minimize", "model_training", "new_label", "next_plan", "nightlight_round", "no_accounts", "not_accessible", "not_started", "note_add", "offline_bolt", "offline_pin", "online_prediction", "opacity", "open_in_browser", "open_in_full", "open_in_new", "open_in_new_off", "open_with", "outbound", "outbox", "outlet", "pageview", "paid", "pan_tool", "payment", "pending", "pending_actions", "perm_camera_mic", "perm_contact_calendar", "perm_data_setting", "perm_device_information", "perm_identity", "perm_media", "perm_phone_msg", "perm_scan_wifi", "pets", "picture_in_picture", "picture_in_picture_alt", "plagiarism", "play_for_work", "polymer", "power_settings_new", "pregnant_woman", "preview", "print", "privacy_tip", "production_quantity_limits", "published_with_changes", "query_builder", "question_answer", "quickreply", "receipt", "record_voice_over", "redeem", "remove_done", "remove_shopping_cart", "reorder", "report_problem", "request_page", "restore", "restore_from_trash", "restore_page", "room", "rounded_corner", "rowing", "rule", "saved_search", "savings", "schedule", "schedule_send", "search", "search_off", "segment", "send_and_archive", "sensors", "sensors_off", "settings", "settings_accessibility", "settings_applications", "settings_backup_restore", "settings_bluetooth", "settings_brightness", "settings_cell", "settings_ethernet", "settings_input_antenna", "settings_input_component", "settings_input_composite", "settings_input_hdmi", "settings_input_svideo", "settings_overscan", "settings_phone", "settings_power", "settings_remote", "settings_voice", "shop", "shop_2", "shop_two", "shopping_bag", "shopping_basket", "shopping_cart", "smart_button", "source", "space_dashboard", "speaker_notes", "speaker_notes_off", "spellcheck", "star_rate", "stars", "sticky_note_2", "store", "subject", "subtitles_off", "supervised_user_circle", "supervisor_account", "support", "swap_horiz", "swap_horizontal_circle", "swap_vert", "swap_vertical_circle", "swipe", "sync_alt", "system_update_alt", "tab", "tab_unselected", "table_view", "task_alt", "text_rotate_up", "text_rotate_vertical", "text_rotation_angledown", "text_rotation_angleup", "text_rotation_down", "text_rotation_none", "theaters", "thumb_down", "thumb_down_off_alt", "thumb_up", "thumb_up_off_alt", "thumbs_up_down", "timeline", "toc", "today", "toll", "touch_app", "tour", "track_changes", "translate", "trending_down", "trending_flat", "trending_up", "try", "turned_in", "turned_in_not", "unpublished", "update", "update_disabled", "upgrade", "verified", "verified_user", "vertical_split", "view_agenda", "view_array", "view_carousel", "view_column", "view_day", "view_headline", "view_in_ar", "view_list", "view_module", "view_quilt", "view_sidebar", "view_stream", "view_week", "visibility", "visibility_off", "voice_over_off", "watch_later", "wifi_protected_setup", "work", "work_off", "work_outline", "wysiwyg", "youtube_searched_for", "zoom_in", "zoom_out"]'
+// setting_json = '{"site_link_tabs":[{"name":"web","links":[{"text":"web-Real-Time","icon":"mdi-clock","url":"https://aaa.com"},{"text":"Audience","icon":"mdi-account","url":"https://aaa.com"},{"text":"Conversions","icon":"card_giftcard","url":"https://aaa.com"}]}],"file_link_tabs":[{"name":"desktop","links":[{"text":"test-file","icon":"mdi-clock","url":"https://aaa.com"},{"text":"Audience","icon":"mdi-account","url":"https://aaa.com"},{"text":"Conversions","icon":"card_giftcard","url":"https://aaa.com"}]}],"items":[{"title":"Todoリスト","icon":"mdi-view-dashboard","id":"app-item-1"},{"title":"サイト","icon":"mdi-forum","id":"app-item-2"},{"title":"ファイル","icon":"mdi-forum","id":"app-item-3"}]}'
+setting_json = '{"site_link_tabs":[{"name":"web","links":[{"text":"web-Real-Time","icon":"mdi-clock","url":"https://aaa.com"},{"text":"Audience","icon":"mdi-account","url":"https://aaa.com"},{"text":"Conversions","icon":"card_giftcard","url":"https://aaa.com"},{"text":"ccccc","icon":"accessible_forward","url":"ddddd"}]}],"file_link_tabs":[{"name":"desktop","links":[{"text":"test-file","icon":"mdi-clock","url":"https://aaa.com"},{"text":"Audience","icon":"mdi-account","url":"https://aaa.com"},{"text":"Conversions","icon":"card_giftcard","url":"https://aaa.com"},{"text":"bbbb","icon":"accessible_forward","url":"aaaaaa"}]}],"items":[{"title":"Todoリスト","icon":"mdi-view-dashboard","id":"app-item-1"},{"title":"サイト","icon":"mdi-forum","id":"app-item-2"},{"title":"ファイル","icon":"mdi-forum","id":"app-item-3"}]}'
+
+// material icons List
+material_icons = JSON.parse(material_icons_json);
+
+// サイトリンク一覧(tabsの初期データ)
+tabs = JSON.parse(setting_json).site_link_tabs
+
+// ファイルリンク一覧
+ftabs = JSON.parse(setting_json).file_link_tabs
+
+// 左のアプリリスト(itemsの初期データ)
+items = JSON.parse(setting_json).items
+
+
+// Todoアプリ用
+var STORAGE_KEY = 'todos-vuejs-demo'
+var todoStorage = {
+  fetch: function () {
+    let todos = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
+    todos.forEach(function (todo, index) {
+      todo.id = index
+      console.log(index)
+    })
+    todoStorage.uid = todos.length
+    return todos
+  },
+  save: function (todos) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(todos))
+  }
+}
+
+
+
+
+var myvue = new Vue({
+    el: '#app',
+    vuetify: new Vuetify(),
+    data: () => ({
+        dialog: false,
+        file_tab_dialog: false,
+        
+        dialog2: false,
+        dialog3: false,
+
+
+        tab: null,
+        ftab: null,
+        
+        items: items,
+        selectedPage: 1,
+        selectedItem: null,
+        tabs: tabs,
+        ftabs: ftabs,
+        dialog: false,
+        material_icons: material_icons,
+        test_mode: '',
+        link_input_icon: '',
+
+
+        // Todoアプリ用
+        todos: [],
+        // ★STEP11 抽出しているToDoの状態
+        current: -1,
+        // ★STEP11＆STEP13 各状態のラベル
+        options: [
+            { value: -1, label: 'すべて' },
+            { value: 0, label: '作業中' },
+            { value: 1, label: '完了' }
+        ]
+    }),
+    methods: {
+        nav_item_get_active: function() {
+            // アプリリストのactiveになっている要素を取得する
+            var menu_items = document.querySelectorAll('.my-left-menu-item')
+            for (let i = 0; i < menu_items.length; i++) {
+                if (menu_items[i].classList.value.split(' ').indexOf('active') != -1){
+                    return i // activeになっている要素番号を返す
+                }
+            }
+            return 1
+        },
+        nav_item_activate_click: function (e) {
+            this.nav_item_activate(e)
+        },
+        nav_item_activate: function(e=null, tar=null) {
+            // 左のリストを初期化する
+            // アプリの番号で選択か
+            // クリックイベントの要素番号で初期化
+            let q = '';           // queryに表示する文字列
+            let active_item = ''; // 
+
+
+            // アプリリストのactiveを除去する
+            var menu_items = document.querySelectorAll('.my-left-menu-item')
+            for (let i = 0; i < menu_items.length; i++) {
+                menu_items[i].classList.remove('active');
+            }
+
+            // すべてのアプリを非表示
+            let app_items = document.querySelectorAll('.myapp-item')
+            for(let i=0; i<app_items.length;i++){
+                app_items[i].style.display = 'none';
+            }
+
+            if (e){
+                e.currentTarget.classList.add('active')
+                q = e.currentTarget.querySelector('.v-list-item__content').innerText
+            }
+            if (tar != null) {
+                menu_items[tar].classList.add('active')
+                q = menu_items[tar].querySelector('.v-list-item__content').innerText
+            }
+            history.replaceState('', '', '/link?' + q)
+            document.getElementById('app-item-' + String(this.nav_item_get_active() + 1)).style.display = 'block'
+
+            // 高さの検知ができないため強制的にResizeイベントを発火する
+            window.dispatchEvent(new Event('resize'));
+        },
+
+
+        // link　リストの更新・削除関連
+        // link_site　タブ内の各種設定
+        // link_tab   タブに関する設定
+        link_site_add_btn_event: function() {
+            // サイトリンク一覧にサイトを追加する
+            var tab = this.link_tab_get_active();
+            let icon = this.link_input_icon;
+
+            if (material_icons.indexOf(icon) != -1) {
+                // 有効になっているアプリ番号で判別する
+                if (this.nav_item_get_active() == 1) {
+                    var name = document.querySelector('#app-item-2 .v-window-item--active').querySelectorAll('.link-item-inputs .v-input input')[2].value;
+                    var url = document.querySelector('#app-item-2 .v-window-item--active').querySelectorAll('.link-item-inputs .v-input input')[3].value;
+
+                    if (name == "" || url == "") {
+                        alert('未入力の項目があります。');
+                        return
+                    }
+                    this.tabs[tab].links.push({"text": name, "icon": icon, "url": url});
+                } else {
+                    var name = document.querySelector('#app-item-3 .v-window-item--active').querySelectorAll('.link-item-inputs .v-input input')[2].value;
+                    var url = document.querySelector('#app-item-3 .v-window-item--active').querySelectorAll('.link-item-inputs .v-input input')[3].value;
+                    
+                    if (name == "" || url == "") {
+                        alert('未入力の項目があります。');
+                        return
+                    }
+                    this.ftabs[tab].links.push({"text": name, "icon": icon, "url": url});
+                }
+            } else {
+                alert('iconが存在しません')
+            }
+        },
+        link_site_delete: function(e) {
+            // サイトリンク一覧のサイトを削除する
+            // サイトリンク一覧のアイコンクリックで削除
+            let ret = confirm('要素を削除してよろしいですか？');
+            if(ret) {
+                let tar = e.currentTarget.parentNode.parentNode // 削除したい要素
+                let menu_items = document.getElementById('app-item-' + String(this.nav_item_get_active() + 1)).querySelectorAll('.v-window-item--active .v-list-item')
+                let tab = this.link_tab_get_active()
+                for (let i = 0; i < menu_items.length; i++) {
+                    if (menu_items[i] == tar) {
+                        // 要素番号の絞り込みが終了
+                        tar.classList.add('link-tab-delete-eve');
+                        if (this.nav_item_get_active() == 1) {
+                            this.tabs[tab].links.splice(i, 1)
+                        } else {
+                            this.ftabs[tab].links.splice(i, 1)
+                        }
+                    }
+                }
+            }
+        },
+        link_site_input_enter: function() {
+            alert('ssss')
+        },
+        link_site_input_icon_show: function (){
+            // サイト追加のアイコン選択用セレクトボックスにアイコンを表示する
+            // 基本はクリックイベントで発動し、
+            // この中でさらにスクロールでも反応するようにイベントを追加
+            let icons = document.querySelectorAll('.v-menu__content .v-list-item > div > div');
+            if (icons) {
+                // scrollでイベント検出可能にする
+                if (document.querySelectorAll('.v-menu__content').length == 1) {
+                    // 一発目は要素が見つからないでエラーになる可能性あり
+                    document.querySelector('.v-menu__content').addEventListener('scroll', this.link_site_input_icon_show)
+                } else if(document.querySelectorAll('.v-menu__content').length == 2) {
+                    document.querySelectorAll('.v-menu__content')[0].addEventListener('scroll', this.link_site_input_icon_show)
+                    document.querySelectorAll('.v-menu__content')[1].addEventListener('scroll', this.link_site_input_icon_show)
+                } else {
+                    console.log('アイコンリスト要素の取得に失敗しました。')
+                }
+            }
+            for (let icon of icons) {
+                let input_html = '';
+                if (icon.querySelector('button')){
+                    input_html = '<button type="button" class="v-icon notranslate link-item-icons v-icon--link material-icons theme--light">'+icon.querySelector('button').innerText+'</button> ' + icon.querySelector('button').innerText
+
+                } else {
+                    input_html = '<button type="button" class="v-icon notranslate link-item-icons v-icon--link material-icons theme--light">'+icon.innerText+'</button> ' + icon.innerText
+                }
+                icon.innerHTML = input_html;
+            }
+        },
+        link_site_icon_hover: function(e) {
+            // リンクアイテムのアイコンホバー
+            let tar = e.target;
+            let icon_name = "";
+            for (var i = 0; i < e.target.classList.length; i++) {
+                // iconのクラス名を取得
+                if (tar.classList[i].indexOf('mdi-') == 0) {
+                    icon_name = tar.classList[i];
+                }
+            }
+            if (icon_name == '') {
+                // material icon対応
+                icon_name = 'mdi-' + tar.innerText
+                tar.innerText = 'delete'
+            } else {
+                tar.classList.remove(icon_name);
+                tar.classList.add('mdi-delete');
+            }
+            tar.classList.add('tmp-' + icon_name);
+            tar.parentNode.parentNode.style.backgroundColor = 'rgba(255, 0, 0, 0.365)';
+        },
+        link_site_icon_mouseout: function(e) {
+            // リンクアイテムのアイコンホバーアウト
+            let tar = e.target;
+            let icon_name = "";
+
+            for (var i = 0; i < tar.classList.length; i++) {
+                // iconのクラス名を取得
+                if (tar.classList[i].indexOf('tmp-mdi-') == 0) {
+                    icon_name = tar.classList[i];
+                }
+            }
+
+            if (icon_name == "") {
+                // アイテムを削除するとエラーになるため対応
+                tar.parentNode.parentNode.style.backgroundColor = '';
+                return 
+            } 
+
+            if (tar.innerText == 'delete') {
+                // material icon 対応
+                tar.innerText = icon_name.replace('tmp-mdi-', '')
+            } else {
+                tar.classList.remove('mdi-delete');
+                tar.classList.add(icon_name.replace('tmp-', ''));
+            }
+
+            tar.classList.remove(icon_name);
+            tar.parentNode.parentNode.style.backgroundColor = '';
+        },
+        link_tab_get_active: function () {
+            // 表示中のタブの番号を取得
+            if(this.nav_item_get_active == 1) {
+                var v_tabs = document.querySelectorAll('#app-item-2 .v-tab');
+                for(var i = 0; i < v_tabs.length; i++){
+                    if (v_tabs[i].classList.value.split(' ').indexOf('v-tab--active') !== -1) {
+                        return i
+                    }
+                }
+            } else {
+                var v_tabs = document.querySelectorAll('#app-item-3 .v-tab');
+                for(var i = 0; i < v_tabs.length; i++){
+                    if (v_tabs[i].classList.value.split(' ').indexOf('v-tab--active') !== -1) {
+                        return i
+                    }
+                }
+            }
+        },
+        link_tab_add: function(e) {
+            // タブを追加する
+            if (this.nav_item_get_active() == 1) {
+                var tab_name = document.querySelector('.link-tab-add-input').querySelector('.v-input input').value
+            } else {
+                var tab_name = document.querySelector('.file-tab-add-input').querySelector('.v-input input').value
+            }
+            console.log('有効なアプリ', this.nav_item_get_active());
+            console.log('タブ名', tab_name)
+            if (this.nav_item_get_active() == 1) {
+                this.tabs.push({
+                    name: tab_name,
+                    links: [
+                    ],
+                });
+                this.dialog = false
+            } else {
+                this.ftabs.push({
+                    name: tab_name,
+                    links: [
+                    ],
+                });
+                this.file_tab_dialog = false;
+            }
+        },
+        link_tab_delete: function(e){
+            // tab削除用のダイアログを表示
+            this.dialog2 = true;
+            e.target.classList.add('link-tab-delete-eve');
+        },
+        link_tab_delete_sel: function(msg){
+            // dialogの２つのボタンのイベント
+            // okなら削除処理
+            // canなら処理中止
+            this.dialog2 = false;
+            if (msg == 'ok'){
+                let tab_doms = document.querySelectorAll('.link-table-header .v-tab')
+                for (let i = 0; i < tab_doms.length; i++) {
+                    tab = tab_doms[i];
+                    if (tab.classList.contains('link-tab-delete-eve')) {
+                        if (this.nav_item_get_active() == 1) {
+                            this.tabs.splice(i, 1)
+                        } else {
+                            this.ftabs.splice(i, 1)
+                        }
+                    }
+                }
+            } else {
+                console.log('can')
+            }
+        },
+
+
+
+        // 共通
+        save_setting_js: function(){
+            // 設定保存関数
+            let blob = new Blob(["setting_json = '" + JSON.stringify({"site_link_tabs": tabs, 'file_link_tabs': ftabs, "items": items}) + "'"],{type: "application/json;charset=utf-8"});
+            let link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'setting.json';
+            link.click();
+        },
+        onResize: function(e) {
+            if (window.innerWidth >= 960) {
+                // document.querySelector('.link-table-header').style.height = '112px'
+                // document.querySelector('.v-tabs-items').style.height = 'calc(100% - 112px)';
+                for(var item of document.querySelectorAll('.link-table-header')) {
+                    item.style.height = '112px';
+                }
+                for(var item of document.querySelectorAll('.v-tabs-items')) {
+                    item.style.height = 'calc(100% - 112px)';
+                }
+            } else {
+                // document.querySelector('.link-table-header').style.height = '104px'
+                // document.querySelector('.v-tabs-items').style.height = 'calc(100% - 104px)';
+                for(var item of document.querySelectorAll('.link-table-header')) {
+                    item.style.height = '104px';
+                }
+                for(var item of document.querySelectorAll('.v-tabs-items')) {
+                    item.style.height = 'calc(100% - 104px)';
+                }
+            }
+        },
+
+        // ★STEP7 ToDo 追加の処理
+        doAdd: function(event, value) {
+            // ref で名前を付けておいた要素を参照
+            var comment = this.$refs.comment
+            // 入力がなければ何もしないで return
+            if (!comment.value.length) {
+                return
+            }
+            // { 新しいID, コメント, 作業状態 }
+            // というオブジェクトを現在の todos リストへ push
+            // 作業状態「state」はデフォルト「作業中=0」で作成
+            this.todos.push({
+                id: todoStorage.uid++,
+                comment: comment.value,
+                state: 0
+            })
+            // フォーム要素を空にする
+            comment.value = ''
+        },
+
+        // ★STEP10 状態変更の処理
+        doChangeState: function (item) {
+            item.state = !item.state ? 1 : 0
+        },
+
+        // ★STEP10 削除の処理
+        doRemove: function (item) {
+            var index = this.todos.indexOf(item)
+            this.todos.splice(index, 1)
+        }
+
+    },
+    beforeDestroy() {
+        if (typeof window == 'undefined') return
+        window.removeEventListener('resize', this.onResize, {passive: true})
+    },
+    mounted() {
+        // アプリ一覧を初期化する
+        // デフォルトアプリはサイト一覧
+        this.nav_item_activate(null, 1);
+
+        // 画面Resizeイベント
+        this.onResize()
+        window.addEventListener('resize', this.onResize, {passive: true})
+    },
+    // ★STEP9
+    created() {
+        // インスタンス作成時に自動的に fetch() する
+        this.todos = todoStorage.fetch()
+    },
+    computed: {
+        // ★STEP12
+        computedTodos: function () {
+            return this.todos.filter(function (el) {
+                return this.current < 0 ? true : this.current === el.state
+            }, this)
+        },
+
+        // ★STEP13 作業中・完了のラベルを表示する
+        labels() {
+        return this.options.reduce(function (a, b) {
+            return Object.assign(a, { [b.value]: b.label })
+        }, {})
+        // キーから見つけやすいように、次のように加工したデータを作成
+        // {0: '作業中', 1: '完了', -1: 'すべて'}
+        }
+  },
+  watch: {
+    // オプションを使う場合はオブジェクト形式にする
+    todos: {
+      // 引数はウォッチしているプロパティの変更後の値
+      handler: function (todos) {
+        todoStorage.save(todos)
+      },
+      // deep オプションでネストしているデータも監視できる
+      deep: true
+    }
+  },
+});
+
+// {
+//     appName: '', // アプリ名
+//     tab: null,   // 初期表示するタブ
+//     dialog_status: false, // タブ追加用のダイアログの表示状態の初期値
+//     dialog2_status: false // タブ削除用のダイアログ
+//     tabs: [
+//         {
+//             name : '', // tab-name
+//             links: [
+//                 {icon: '', text: '', url: ''},
+//                 {icon: '', text: '', url: ''},
+//                 {icon: '', text: '', url: ''},
+//                 {icon: '', text: '', url: ''},
+//             ]
+//         }
+//     ],
+// }
+
+</script>
+<style>
+    .my-left-menu-item.active, .v-item--active {
+        background-color: #E0E0E0;
+    } 
+
+    .v-tabs-items > .v-window__container {
+        height: 100%;
+    }
+    .v-window-item .v-list-item:hover {
+        background-color: #E0E0E0;
+    }
+    /* .v-window-item .v-list-item .v-list-item__icon:hover {
+    border: solid 1px red;
+    background-color: rgba(255, 0, 0, 0.365);
+    border-radius: 50%;
+    } */
+
+
+</style>
+</body>
+</html>
