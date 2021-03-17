@@ -56,19 +56,6 @@
                     <v-list-item-title>設定保存</v-list-item-title>
                 </v-list-item-content>
             </v-list-item>
-
-            <v-list-item
-                v-on:click="delete_local_storage" 
-                class="my-left-menu-item"
-            >
-                <!-- 設定保存ボタン -->
-                <v-list-item-icon>
-                    <v-icon>delete</v-icon>
-                </v-list-item-icon>
-                <v-list-item-content>
-                    <v-list-item-title>Localデータを削除</v-list-item-title>
-                </v-list-item-content>
-            </v-list-item>
         </v-list>
     </v-card>
     <!-- Left バー end -->
@@ -150,159 +137,304 @@
 <!-- item1: Todoリスト - end -->
 <!-- ---------------------------------------------------------------------------------------------------------------------------------------------------- -->
 <!-- ---------------------------------------------------------------------------------------------------------------------------------------------------- -->
-<!-- item2, item3: サイト一覧, ファイル一覧 -->
-<template v-for="template_num in 2">
-    <!-- <h1>{{ template_num }}</h1> -->
-    <v-card :id="'app-item-' + (template_num + 1)" class="myapp-item" style="width: 100%;">
-        <v-toolbar
-            color="cyan"
-            dark
-            flat
-            class="link-table-header"
-        >
-        <v-toolbar-title>Links</v-toolbar-title>
+<!-- Item2: サイト一覧 -->
+<v-card id="app-item-2" class="myapp-item" style="width: 100%;">
+    <v-toolbar
+        color="cyan"
+        dark
+        flat
+        class="link-table-header"
+    >
+    <v-toolbar-title>Links</v-toolbar-title>
 
-        <template v-slot:extension>
-            <v-tabs
-                v-model="apps.app_data[template_num ].tab"
-                align-with-title
-            >
-                <v-tabs-slider color="yellow"></v-tabs-slider>
-                <v-tab
-                    v-for="(tab, tab_num) in apps.app_data[template_num ].tabs"
-                    :key="tab.name"
-                    @click.right.prevent="link_tab_delete(tab_num, $event)"
-                >
-                    {{ tab.name }}
-                </v-tab>
-                <v-tab style="background-color: #1976d2 !important; padding: 0;">
+    <template v-slot:extension>
+        <v-tabs
+            v-model="tab"
+            align-with-title
+        >
+        <v-tabs-slider color="yellow"></v-tabs-slider>
+        <v-tab
+            v-for="tab in tabs"
+            :key="tab.name"
+            @click.right.prevent="link_tab_delete"
+        >
+            {{ tab.name }}
+        </v-tab>
+        <v-tab style="background-color: #1976d2 !important; padding: 0;">
                     <v-btn
                         color="transparent"
-                        depressed
                         dark
                         small
-                        @click="tab_add_btn_click"
+                        @click="tab_add_btn"
                         style="height: 100%; width: 100%;"
                     >
                         <v-icon>mdi-plus</v-icon>
                     </v-btn>
-                </v-tab>
-            </v-tabs>
-        </template>
-        </v-toolbar>
 
-        <v-tabs-items v-model="apps.app_data[template_num ].tab">
-            <v-tab-item
-                v-for="tab in apps.app_data[template_num ].tabs"
-                :key="tab.name"
-                style="height: 100%;"
+        </v-tab>
+        </v-tabs>
+    </template>
+    </v-toolbar>
+
+    <v-tabs-items v-model="tab">
+        <v-tab-item
+            v-for="tab in tabs"
+            :key="tab.name"
+            style="height: 100%;"
+        >
+            <!-- リンク集 -->
+            <v-card
+                tile
+                style="width: 100%; height: 100%;"
             >
-                <!-- リンク集 -->
-                <v-card
-                    tile
-                    style="width: 100%; height: 100%;"
+                <v-list 
+                    flat
+                    rounded
+                    style="height: calc(100% - 56px); overflow-y: auto;"
                 >
-                    <v-list 
-                        flat
-                        rounded
-                        style="height: calc(100% - 56px); overflow-y: auto;"
+                    <v-list-item
+                        v-for="(item, i) in tab.links"
+                        :key="i"
+                        link
                     >
-                        <v-list-item
-                            v-for="(item, i) in tab.links"
-                            :key="i"
-                            link
-                        >
-                            <v-list-item-icon>
-                                <v-icon v-text="item.icon" class="link-item-icons" v-on:mouseover="link_site_icon_hover(i, $event)" v-on:mouseout="link_site_icon_mouseout(i, $event)" v-on:click="link_site_delete(i)"></v-icon>
-                            </v-list-item-icon>
-                            <v-list-item-content style="height: 48px;position: relative;">
-                                <a v-text="item.text"
-                                    :href="item.url"
-                                    target="_blank"
-                                    style="display: block; height: 100%; width: 100%; line-height: 48px;position: absolute; top:0; left: 0; text-decoration: none; color:rgba(0,0,0,.87)!important"
-                                >
-                                </a>
-                            </v-list-item-content>
-                        </v-list-item>
-                    </v-list>
+                        <v-list-item-icon>
+                            <v-icon v-text="item.icon" class="link-item-icons" v-on:mouseover="link_site_icon_hover" v-on:mouseout="link_site_icon_mouseout" v-on:click="link_site_delete"></v-icon>
+                        </v-list-item-icon>
+                        <v-list-item-content style="height: 48px;position: relative;">
+                            <a v-text="item.text"
+                                :href="item.url"
+                                target="_blank"
+                                style="display: block; height: 100%; width: 100%; line-height: 48px;position: absolute; top:0; left: 0; text-decoration: none; color:rgba(0,0,0,.87)!important"
+                            >
+                            </a>
+                        </v-list-item-content>
+                    </v-list-item>
+                </v-list>
 
-                    <div class="link-item-inputs" style="height: 56px; padding: 8px; display: flex;">
-                        <v-select
-                            :items="material_icons"
-                            label="Icon"
-                            outlined
-                            rounded
-                            dense
-                            v-model='link_input_icon'
-                            @click="link_site_input_icon_show"
-                        >
-                        </v-select>
-                        <v-text-field
-                            label="サイト名"
-                            placeholder="登録するサイト名を入力"
-                            outlined
-                            rounded
-                            dense
-                            style="margin-left: 15px;"
-                            v-on:keyup.enter="link_site_add_btn_event"
-                        ></v-text-field>
-                        <v-text-field
-                            label="サイト URL"
-                            placeholder="登録するURLを入力"
-                            rounded
-                            outlined
-                            dense
-                            style="margin-left: 15px;"
-                            v-on:keyup.enter="link_site_add_btn_event"
-                        ></v-text-field>
-                    </div>
+                <div class="link-item-inputs" style="height: 56px; padding: 8px; display: flex;">
+                    <v-select
+                        :items="material_icons"
+                        label="Icon"
+                        outlined
+                        rounded
+                        dense
+                        v-model='link_input_icon'
+                        @click="link_site_input_icon_show"
+                    >
+                    </v-select>
+                    <v-text-field
+                        label="サイト名"
+                        placeholder="登録するサイト名を入力"
+                        outlined
+                        rounded
+                        dense
+                        style="margin-left: 15px;"
+                        v-on:keyup.enter="link_site_add_btn_event"
+                    ></v-text-field>
+                    <v-text-field
+                        label="サイト URL"
+                        placeholder="登録するURLを入力"
+                        rounded
+                        outlined
+                        dense
+                        style="margin-left: 15px;"
+                        v-on:keyup.enter="link_site_add_btn_event"
+                    ></v-text-field>
+                    <!-- <v-btn
+                        class="mx-2"
+                        fab
+                        dark
+                        color="indigo"
+                        small
+                        v-on:click="link_site_add_btn_event"
+                    >
+                        <v-icon dark>mdi-plus</v-icon>
+                    </v-btn> -->
+                </div>
 
-                </v-card>
-            </v-tab-item>
-            <v-tab-item></v-tab-item><!-- これがないと[+]ボタンタブ用のv-tab-itemの数が合わないから追加できない -->
-        </v-tabs-items>
-    </v-card>
+            </v-card>
+        </v-tab-item>
+        <v-tab-item></v-tab-item><!-- これがないと[+]ボタンタブ用のv-tab-itemの数が合わないから追加できない -->
+    </v-tabs-items>
 
+    
     <v-dialog
-        v-model="apps.app_data[template_num ].tabadd_dialog_status"
-        persistent
-        max-width="290"
-    >
-
+    v-model="dialog2"
+    max-width="290"
+    persistent>
+        <!-- タブの削除確認用のダイアログ -->
         <v-card>
-            <v-card-title class="headline">タブを追加します</v-card-title>
-            <v-card-text>
-                追加するタブ名を入力してください。
-                <v-text-field
-                    label="タブ名"
-                    placeholder="タブ名を入力してください"
-                    outlined
-                    style="margin-top: 10px;"
-                    v-bind:class="[apps.app_data[template_num ].tabadd_dialog_cls]"
-                ></v-text-field>
-            </v-card-text>
-            
-            <v-card-actions>
+        <v-card-title>確認</v-card-title>
+        <v-card-text>タブを削除します。</v-card-text>
+        <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn
-                color="blue darken-1"
-                text
-                @click="dialog = false"
-            >
-                キャンセル
-            </v-btn>
-            <v-btn
-                color="blue darken-1"
-                text
-                @click="link_tab_add"
-            >
-                追加する
-            </v-btn>
-            </v-card-actions>
+            <v-btn @click="link_tab_delete_sel('ok')">実行</v-btn>
+            <v-btn @click="link_tab_delete_sel('can')">キャンセル</v-btn>
+            <v-spacer></v-spacer>
+        </v-card-actions>
         </v-card>
     </v-dialog>
+</v-card>
+<!-- item2: サイト一覧 - end -->
+<!-- ---------------------------------------------------------------------------------------------------------------------------------------------------- -->
+<!-- Item3: ファイル一覧 -->
+<v-card id="app-item-3" class="myapp-item" style="width: 100%;">
+    <v-toolbar
+        color="cyan"
+        dark
+        flat
+        class="link-table-header"
+    >
+    <v-toolbar-title>FileLink</v-toolbar-title>
+
+    <template v-slot:extension>
+        <v-tabs
+            v-model="ftab"
+            align-with-title
+        ><!-- v-model="対応するタブアイテムリストでも同一の値を指定する" -->
+        <v-tabs-slider color="yellow"></v-tabs-slider>
+        <v-tab
+            v-for="tab in ftabs"
+            :key="tab.name"
+            @click.right.prevent="link_tab_delete"
+        >
+            {{ tab.name }}
+        </v-tab>
+        <v-tab style="background-color: #1976d2 !important; padding: 0;">
+            <v-row justify="center" style="height: 100%; width: 100%; margin: 0;">
+                <v-dialog
+                    v-model="file_tab_dialog"
+                    persistent
+                    max-width="290"
+                >
+                    <template v-slot:activator="{ on, attrs }">
+                        <v-btn
+                            color="transparent"
+                            depressed
+                            dark
+                            small
+                            v-bind="attrs"
+                            v-on="on"
+                            style="height: 100%; width: 100%;"
+                        >
+                        <v-icon>mdi-plus</v-icon>
+                        </v-btn>
+                    </template>
+                    <v-card>
+                        <v-card-title class="headline">
+                        タブを追加します
+                        </v-card-title>
+                        <v-card-text>
+                            追加するタブ名を入力してください。
+                            <v-text-field
+                                label="タブ名"
+                                placeholder="タブ名を入力してください"
+                                outlined
+                                style="margin-top: 10px;"
+                                class="file-tab-add-input"
+                            ></v-text-field>
+                        </v-card-text>
+                        
+                        <v-card-actions>
+                        <v-spacer></v-spacer>
+                        <v-btn
+                            color="blue darken-1"
+                            text
+                            @click="file_tab_dialog = false"
+                        >
+                            キャンセル
+                        </v-btn>
+                        <v-btn
+                            color="blue darken-1"
+                            text
+                            @click="link_tab_add"
+                        >
+                            追加する
+                        </v-btn>
+                        </v-card-actions>
+                    </v-card>
+                </v-dialog>
+            </v-row>
+
+        </v-tab>
+        </v-tabs>
+    </template>
+    </v-toolbar>
+
+    <v-tabs-items v-model="ftab">
+        <v-tab-item
+            v-for="tab in ftabs"
+            :key="tab.name"
+            style="height: 100%;"
+        >
+            <!-- リンク集 -->
+            <v-card
+                tile
+                style="width: 100%; height: 100%;"
+            >
+                <v-list 
+                    flat
+                    rounded
+                    style="height: calc(100% - 56px); overflow-y: auto;"
+                >
+                    <v-list-item
+                        v-for="(item, i) in tab.links"
+                        :key="i"
+                        link
+                    >
+                        <v-list-item-icon>
+                            <v-icon v-text="item.icon" class="link-item-icons" v-on:mouseover="link_site_icon_hover" v-on:mouseout="link_site_icon_mouseout" v-on:click="link_site_delete"></v-icon>
+                        </v-list-item-icon>
+                        <v-list-item-content style="height: 48px;position: relative;">
+                            <a v-text="item.text"
+                                :href="item.url"
+                                target="_blank"
+                                style="display: block; height: 100%; width: 100%; line-height: 48px;position: absolute; top:0; left: 0; text-decoration: none; color:rgba(0,0,0,.87)!important"
+                            >
+                            </a>
+                        </v-list-item-content>
+                    </v-list-item>
+                </v-list>
+
+                <div class="link-item-inputs" style="height: 56px; padding: 8px; display: flex;">
+                    <v-select
+                        :items="material_icons"
+                        label="Icon"
+                        outlined
+                        rounded
+                        dense
+                        v-model='link_input_icon'
+                        @click="link_site_input_icon_show"
+                    >
+                    </v-select>
+                    <v-text-field
+                        label="サイト名"
+                        placeholder="登録するサイト名を入力"
+                        outlined
+                        rounded
+                        dense
+                        style="margin-left: 15px;"
+                        v-on:keyup.enter="link_site_add_btn_event"
+                        ></v-text-field>
+                    <v-text-field
+                        label="サイト URL"
+                        placeholder="登録するURLを入力"
+                        rounded
+                        outlined
+                        dense
+                        style="margin-left: 15px;"
+                        v-on:keyup.enter="link_site_add_btn_event"
+                    ></v-text-field>
+                </div>
+
+            </v-card>
+        </v-tab-item>
+        <v-tab-item></v-tab-item><!-- これがないと[+]ボタンタブ用のv-tab-itemの数が合わないから追加できない -->
+    </v-tabs-items>
+
+    
     <v-dialog
-        v-model="apps.app_data[template_num ].tabdel_dialog_status"
+        v-model="dialog3"
         max-width="290"
         persistent
     >
@@ -318,10 +450,8 @@
         </v-card-actions>
         </v-card>
     </v-dialog>
-</template>
-
-
-<!-- item2, item3: サイト一覧, ファイル一覧 - end -->
+</v-card>
+<!-- item3: ファイル一覧 - end -->
 <!-- ---------------------------------------------------------------------------------------------------------------------------------------------------- -->
 
 
@@ -346,7 +476,7 @@ let MATERIAL_ICONS_JSON = '["3d_rotation", "accessibility", "accessibility_new",
 let material_icons = JSON.parse(MATERIAL_ICONS_JSON); // material icons List
 
 // JSON(設定情報の初期化とユーザの初期値を更新)
-let SETTING_JSON = '{"site_link_tabs":[{"name":"test","links":[{"text":"web-Real-Time","icon":"mdi-clock","url":"https://aaa.com"}]},{"name":"web","links":[{"text":"web-Real-Time","icon":"mdi-clock","url":"https://aaa.com"},{"text":"Audience","icon":"mdi-account","url":"https://aaa.com"},{"text":"Conversions","icon":"card_giftcard","url":"https://aaa.com"},{"text":"ccccc","icon":"accessible_forward","url":"ddddd"}]}],"file_link_tabs":[{"name":"desktop","links":[{"text":"test-file","icon":"mdi-clock","url":"https://aaa.com"},{"text":"Audience","icon":"mdi-account","url":"https://aaa.com"},{"text":"Conversions","icon":"card_giftcard","url":"https://aaa.com"},{"text":"bbbb","icon":"accessible_forward","url":"aaaaaa"}]}],"items":[{"title":"Todoリスト","icon":"mdi-view-dashboard","id":"app-item-1"},{"title":"サイト","icon":"mdi-forum","id":"app-item-2"},{"title":"ファイル","icon":"mdi-forum","id":"app-item-3"}]}'
+let SETTING_JSON = '{"site_link_tabs":[{"name":"web","links":[{"text":"web-Real-Time","icon":"mdi-clock","url":"https://aaa.com"},{"text":"Audience","icon":"mdi-account","url":"https://aaa.com"},{"text":"Conversions","icon":"card_giftcard","url":"https://aaa.com"},{"text":"ccccc","icon":"accessible_forward","url":"ddddd"}]}],"file_link_tabs":[{"name":"desktop","links":[{"text":"test-file","icon":"mdi-clock","url":"https://aaa.com"},{"text":"Audience","icon":"mdi-account","url":"https://aaa.com"},{"text":"Conversions","icon":"card_giftcard","url":"https://aaa.com"},{"text":"bbbb","icon":"accessible_forward","url":"aaaaaa"}]}],"items":[{"title":"Todoリスト","icon":"mdi-view-dashboard","id":"app-item-1"},{"title":"サイト","icon":"mdi-forum","id":"app-item-2"},{"title":"ファイル","icon":"mdi-forum","id":"app-item-3"}]}'
 let items = JSON.parse(SETTING_JSON).items            // 左のアプリリスト(itemsの初期データ)
 let tabs = JSON.parse(SETTING_JSON).site_link_tabs    // サイトリンク一覧(tabsの初期データ)
 let ftabs = JSON.parse(SETTING_JSON).file_link_tabs   // ファイルリンク一覧
@@ -382,43 +512,42 @@ var myvue = new Vue({
     el: '#app',
     vuetify: new Vuetify(),
     data: () => ({
-        tabadd_dialog_cls: 'konnitiwa',
-        active_data: null,
         apps: {
             active_app: start_app,
-            active_data: null,  
             app_data: [
                 {
                     appName: 'WebLinks', // アプリ名
                     tab: null,   // 初期表示するタブ
                     tabadd_dialog_status: false, // タブ追加用のダイアログの表示状態の初期値
                     tabdel_dialog_status: false, // タブ削除用のダイアログ
-                    active_tab: 0,               // 表示中のタブ
-                    tabs: tabs,                  // 実際のデータ
+                    tabs: tabs
                 },
                 {
-                    appName: 'WebLinks', // アプリ名
+                    appName: '', // アプリ名
                     tab: null,   // 初期表示するタブ
                     tabadd_dialog_status: false, // タブ追加用のダイアログの表示状態の初期値
                     tabdel_dialog_status: false, // タブ削除用のダイアログ
-                    active_tab: 0,               // 表示中のタブ
-                    tabs: tabs,                  // 実際のデータ
-                    tabadd_dialog_cls: 'link-tab-add-input',
-                },
-                {
-                    appName: 'FileLinks',        // アプリ名
-                    tab: null,                   // 初期表示するタブ
-                    tabadd_dialog_status: false, // タブ追加用のダイアログの表示状態の初期値
-                    tabdel_dialog_status: false, // タブ削除用のダイアログ
-                    tabs: ftabs,
-                    tabadd_dialog_cls: 'file-tab-add-input',
+                    tabs: ftabs
                 }
             ]
         },
 
+
+        dialog: false,   // tab追加用のダイアログ
+        dialog2: false,  // tab削除用のダイアログ
+        file_tab_dialog: false, // tab追加用のダイアログ
+        dialog3: false,
+
+
+        tab: null,
+        ftab: null,
+        
         items: items,
         selectedPage: 1,
         selectedItem: null,
+        tabs: tabs,
+        ftabs: ftabs,
+        dialog: false,
         material_icons: material_icons,
         test_mode: '',
         link_input_icon: '',
@@ -453,7 +582,9 @@ var myvue = new Vue({
             // 左のリストを初期化する
             // アプリの番号で選択か
             // クリックイベントの要素番号で初期化
-            let q = ''; // queryに表示する文字列
+            let q = '';           // queryに表示する文字列
+            let active_item = ''; // 
+
 
             // アプリリストのactiveを除去する
             var menu_items = document.querySelectorAll('.my-left-menu-item')
@@ -466,28 +597,20 @@ var myvue = new Vue({
             for(let i=0; i<app_items.length;i++){
                 app_items[i].style.display = 'none';
             }
-            
-            // アプリのactive化
+
             if (e){
-                // アプリリストのクリックされた要素にactiveクラスを追加する
                 e.currentTarget.classList.add('active')
                 q = e.currentTarget.querySelector('.v-list-item__content').innerText
-            } else if (tar != null) {
-                // 指定された要素番号のアプリにactiveクラスを追加する
+            }
+            if (tar != null) {
                 menu_items[tar].classList.add('active')
                 q = menu_items[tar].querySelector('.v-list-item__content').innerText
             }
-            history.replaceState('', '', '/link?' + q)                  // 取得した文字列をURLのクエリーに追加
-            let active_app_no = String(this.nav_item_get_active() + 1); // アプリリストからactiveクラスを持つ要素番号を取得する
-            document.getElementById('app-item-' + active_app_no).style.display = 'block'; // アプリのactive化
+            history.replaceState('', '', '/link?' + q)
+            document.getElementById('app-item-' + String(this.nav_item_get_active() + 1)).style.display = 'block'
 
             // 高さの検知ができないため強制的にResizeイベントを発火する
             window.dispatchEvent(new Event('resize'));
-
-            // activeなアプリ番号を変更する
-            this.apps.active_app = this.nav_item_get_active();
-            this.apps.active_data = this.apps.app_data[this.apps.active_app];
-            this.active_data = this.apps.app_data[this.apps.active_app];
         },
 
 
@@ -496,72 +619,57 @@ var myvue = new Vue({
         // link_tab   タブに関する設定
         link_site_add_btn_event: function() {
             // サイトリンク一覧にサイトを追加する
-            let active_tab = this.apps.active_data.tab;
+            var tab = this.link_tab_get_active();
             let icon = this.link_input_icon;
 
             if (material_icons.indexOf(icon) != -1) {
-                let app_id = `#app-item-${this.apps.active_app + 1}`;
-                let name = document.querySelector(app_id + ' .v-window-item--active').querySelectorAll('.link-item-inputs .v-input input')[2].value;
-                let url  = document.querySelector(app_id + ' .v-window-item--active').querySelectorAll('.link-item-inputs .v-input input')[3].value;
+                // 有効になっているアプリ番号で判別する
+                if (this.nav_item_get_active() == 1) {
+                    var name = document.querySelector('#app-item-2 .v-window-item--active').querySelectorAll('.link-item-inputs .v-input input')[2].value;
+                    var url = document.querySelector('#app-item-2 .v-window-item--active').querySelectorAll('.link-item-inputs .v-input input')[3].value;
 
-                if (name == "" || url == "") {
-                    alert('未入力の項目があります。');
-                    return
+                    if (name == "" || url == "") {
+                        alert('未入力の項目があります。');
+                        return
+                    }
+                    this.tabs[tab].links.push({"text": name, "icon": icon, "url": url});
+                } else {
+                    var name = document.querySelector('#app-item-3 .v-window-item--active').querySelectorAll('.link-item-inputs .v-input input')[2].value;
+                    var url = document.querySelector('#app-item-3 .v-window-item--active').querySelectorAll('.link-item-inputs .v-input input')[3].value;
+                    
+                    if (name == "" || url == "") {
+                        alert('未入力の項目があります。');
+                        return
+                    }
+                    this.ftabs[tab].links.push({"text": name, "icon": icon, "url": url});
                 }
-                this.apps.active_data.tabs[active_tab].links.push({"text": name, "icon": icon, "url": url});
             } else {
-                alert('未登録のiconのためLinkに追加できません')
+                alert('iconが存在しません')
             }
         },
-        link_site_delete: function(link_num) {
+        link_site_delete: function(e) {
             // サイトリンク一覧のサイトを削除する
             // サイトリンク一覧のアイコンクリックで削除
             let ret = confirm('要素を削除してよろしいですか？');
             if(ret) {
-                this.active_data.tabs[this.active_data.tab].links.splice(link_num, 1);
+                let tar = e.currentTarget.parentNode.parentNode // 削除したい要素
+                let menu_items = document.getElementById('app-item-' + String(this.nav_item_get_active() + 1)).querySelectorAll('.v-window-item--active .v-list-item')
+                let tab = this.link_tab_get_active()
+                for (let i = 0; i < menu_items.length; i++) {
+                    if (menu_items[i] == tar) {
+                        // 要素番号の絞り込みが終了
+                        tar.classList.add('link-tab-delete-eve');
+                        if (this.nav_item_get_active() == 1) {
+                            this.tabs[tab].links.splice(i, 1)
+                        } else {
+                            this.ftabs[tab].links.splice(i, 1)
+                        }
+                    }
+                }
             }
         },
-        link_site_icon_hover: function(link_num, e) {
-            // リンクアイテムのアイコンホバー
-            this.active_data.tabs[this.active_data.tab].links[link_num]['tmp_icon'] = this.active_data.tabs[this.active_data.tab].links[link_num].icon;
-            this.active_data.tabs[this.active_data.tab].links[link_num].icon = 'delete';
-            e.target.parentNode.parentNode.style.backgroundColor = 'rgba(255, 0, 0, 0.365)';
-        },
-        link_site_icon_mouseout: function(link_num, e) {
-            // リンクアイテムのアイコンホバーアウト
-            if (this.active_data.tabs[this.active_data.tab].links[link_num]['tmp_icon']) {
-                this.active_data.tabs[this.active_data.tab].links[link_num].icon = this.active_data.tabs[this.active_data.tab].links[link_num]['tmp_icon'];
-            }
-            e.target.parentNode.parentNode.style.backgroundColor = '';
-        },
-        tab_add_btn_click: function() {
-            this.active_data.tabadd_dialog_status=true;
-        },
-        link_tab_add: function(e) {
-            // タブを追加する
-            var tab_name = document.querySelector(`.${this.active_data.tabadd_dialog_cls}`).querySelector('.v-input input').value
-            this.active_data.tabs.push({
-                name: tab_name,
-                links: [],
-            });
-            this.active_data.tabadd_dialog_status = false;
-        },
-        link_tab_delete: function(tab_num, e){
-            // tab削除用のダイアログを表示
-            this.active_data.tabdel_dialog_status = true;
-            this.active_data['tabdel_dialog_tab_num'] = tab_num
-        },
-        link_tab_delete_sel: function(msg){
-            // dialogの２つのボタンのイベント
-            // okなら削除処理
-            // canなら処理中止
-            this.active_data.tabdel_dialog_status = false;
-            console.log(this.active_data.tabdel_dialog_tab_num)
-            if (msg == 'ok'){
-                this.active_data.tabs.splice(this.active_data.tabdel_dialog_tab_num, 1);
-            } else {
-                console.log('can')
-            }
+        link_site_input_enter: function() {
+            alert('ssss')
         },
         link_site_input_icon_show: function (){
             // サイト追加のアイコン選択用セレクトボックスにアイコンを表示する
@@ -591,6 +699,127 @@ var myvue = new Vue({
                 icon.innerHTML = input_html;
             }
         },
+        link_site_icon_hover: function(e) {
+            // リンクアイテムのアイコンホバー
+            let tar = e.target;
+            let icon_name = "";
+            for (var i = 0; i < e.target.classList.length; i++) {
+                // iconのクラス名を取得
+                if (tar.classList[i].indexOf('mdi-') == 0) {
+                    icon_name = tar.classList[i];
+                }
+            }
+            if (icon_name == '') {
+                // material icon対応
+                icon_name = 'mdi-' + tar.innerText
+                tar.innerText = 'delete'
+            } else {
+                tar.classList.remove(icon_name);
+                tar.classList.add('mdi-delete');
+            }
+            tar.classList.add('tmp-' + icon_name);
+            tar.parentNode.parentNode.style.backgroundColor = 'rgba(255, 0, 0, 0.365)';
+        },
+        link_site_icon_mouseout: function(e) {
+            // リンクアイテムのアイコンホバーアウト
+            let tar = e.target;
+            let icon_name = "";
+
+            for (var i = 0; i < tar.classList.length; i++) {
+                // iconのクラス名を取得
+                if (tar.classList[i].indexOf('tmp-mdi-') == 0) {
+                    icon_name = tar.classList[i];
+                }
+            }
+
+            if (icon_name == "") {
+                // アイテムを削除するとエラーになるため対応
+                tar.parentNode.parentNode.style.backgroundColor = '';
+                return 
+            } 
+
+            if (tar.innerText == 'delete') {
+                // material icon 対応
+                tar.innerText = icon_name.replace('tmp-mdi-', '')
+            } else {
+                tar.classList.remove('mdi-delete');
+                tar.classList.add(icon_name.replace('tmp-', ''));
+            }
+
+            tar.classList.remove(icon_name);
+            tar.parentNode.parentNode.style.backgroundColor = '';
+        },
+        link_tab_get_active: function () {
+            // 表示中のタブの番号を取得
+            if(this.nav_item_get_active == 1) {
+                var v_tabs = document.querySelectorAll('#app-item-2 .v-tab');
+                for(var i = 0; i < v_tabs.length; i++){
+                    if (v_tabs[i].classList.value.split(' ').indexOf('v-tab--active') !== -1) {
+                        return i
+                    }
+                }
+            } else {
+                var v_tabs = document.querySelectorAll('#app-item-3 .v-tab');
+                for(var i = 0; i < v_tabs.length; i++){
+                    if (v_tabs[i].classList.value.split(' ').indexOf('v-tab--active') !== -1) {
+                        return i
+                    }
+                }
+            }
+        },
+        tab_add_btn: function() {
+            alert('くりっくされました')
+        },
+        link_tab_add: function(e) {
+            // タブを追加する
+            if (this.nav_item_get_active() == 1) {
+                var tab_name = document.querySelector('.link-tab-add-input').querySelector('.v-input input').value
+            } else {
+                var tab_name = document.querySelector('.file-tab-add-input').querySelector('.v-input input').value
+            }
+            if (this.nav_item_get_active() == 1) {
+                this.tabs.push({
+                    name: tab_name,
+                    links: [
+                    ],
+                });
+                this.dialog = false
+            } else {
+                this.ftabs.push({
+                    name: tab_name,
+                    links: [
+                    ],
+                });
+                this.file_tab_dialog = false;
+            }
+        },
+        link_tab_delete: function(e){
+            // tab削除用のダイアログを表示
+            this.dialog2 = true;
+            e.target.classList.add('link-tab-delete-eve');
+        },
+        link_tab_delete_sel: function(msg){
+            // dialogの２つのボタンのイベント
+            // okなら削除処理
+            // canなら処理中止
+            this.dialog2 = false;
+            if (msg == 'ok'){
+                let tab_doms = document.querySelectorAll('.link-table-header .v-tab')
+                for (let i = 0; i < tab_doms.length; i++) {
+                    tab = tab_doms[i];
+                    if (tab.classList.contains('link-tab-delete-eve')) {
+                        if (this.nav_item_get_active() == 1) {
+                            this.tabs.splice(i, 1)
+                        } else {
+                            this.ftabs.splice(i, 1)
+                        }
+                    }
+                }
+            } else {
+                console.log('can')
+            }
+        },
+
 
 
         // 共通
@@ -601,15 +830,6 @@ var myvue = new Vue({
             link.href = URL.createObjectURL(blob);
             link.download = 'setting.json';
             link.click();
-        },
-        delete_local_storage: function() {
-            let keys = []
-            for (let l =0; l< localStorage.length; l++) {
-                keys.push(localStorage.key(l))
-            }
-            for (let key of keys) {
-                localStorage.removeItem(key);
-            }
         },
         onResize: function(e) {
             if (window.innerWidth >= 960) {
