@@ -135,7 +135,7 @@
     <h2 style="margin-top: 20px; margin-bottom: 10px;">新しい作業の追加</h2>
     <form class="add-form" v-on:submit.prevent="doAdd">
       <!-- コメント入力フォーム -->
-      <v-text-field label="コメント" type="text"></v-text-field>
+      <v-text-field v-model="comment" label="コメント" type="text"></v-text-field>
       <!-- 追加ボタンのモック -->
       <!-- <button type="submit">追加</button> -->
       <v-btn
@@ -233,7 +233,7 @@
                             outlined
                             rounded
                             dense
-                            v-model='link_input_icon'
+                            v-model='apps.app_data[template_num].link_input_icon'
                             @click="link_site_input_icon_show"
                         >
                         </v-select>
@@ -360,7 +360,6 @@ let todoStorage = {
     let todos = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
     todos.forEach(function (todo, index) {
       todo.id = index
-      console.log(index)
     })
     todoStorage.uid = todos.length
     return todos
@@ -370,8 +369,12 @@ let todoStorage = {
   }
 }
 let myStorage = {
-    save: function (key, val) {
-        localStorage.setItem(key, JSON.stringify(val));
+    fetch: function() {
+        let app_datas = JSON.parse(localStorage.getItem('APPS') || '[]')
+        return app_datas
+    },
+    save: function (val) {
+        localStorage.setItem('APPS', JSON.stringify(val));
     }
 }
 
@@ -390,11 +393,6 @@ var myvue = new Vue({
             app_data: [
                 {
                     appName: 'WebLinks', // アプリ名
-                    tab: null,   // 初期表示するタブ
-                    tabadd_dialog_status: false, // タブ追加用のダイアログの表示状態の初期値
-                    tabdel_dialog_status: false, // タブ削除用のダイアログ
-                    active_tab: 0,               // 表示中のタブ
-                    tabs: tabs,                  // 実際のデータ
                 },
                 {
                     appName: 'WebLinks', // アプリ名
@@ -404,6 +402,7 @@ var myvue = new Vue({
                     active_tab: 0,               // 表示中のタブ
                     tabs: tabs,                  // 実際のデータ
                     tabadd_dialog_cls: 'link-tab-add-input',
+                    link_input_icon: ''
                 },
                 {
                     appName: 'FileLinks',        // アプリ名
@@ -412,6 +411,7 @@ var myvue = new Vue({
                     tabdel_dialog_status: false, // タブ削除用のダイアログ
                     tabs: ftabs,
                     tabadd_dialog_cls: 'file-tab-add-input',
+                    link_input_icon: ''
                 }
             ]
         },
@@ -421,9 +421,9 @@ var myvue = new Vue({
         selectedItem: null,
         material_icons: material_icons,
         test_mode: '',
-        link_input_icon: '',
+        
 
-
+        comment: '',
         // Todoアプリ用
         todos: [],
         // ★STEP11 抽出しているToDoの状態
@@ -497,7 +497,7 @@ var myvue = new Vue({
         link_site_add_btn_event: function() {
             // サイトリンク一覧にサイトを追加する
             let active_tab = this.apps.active_data.tab;
-            let icon = this.link_input_icon;
+            let icon = this.active_data.link_input_icon;
 
             if (material_icons.indexOf(icon) != -1) {
                 let app_id = `#app-item-${this.apps.active_app + 1}`;
@@ -509,6 +509,12 @@ var myvue = new Vue({
                     return
                 }
                 this.apps.active_data.tabs[active_tab].links.push({"text": name, "icon": icon, "url": url});
+
+                // 初期化
+                this.active_data.link_input_icon = '';
+                document.querySelector(app_id + ' .v-window-item--active').querySelectorAll('.link-item-inputs .v-input input')[2].value = '';
+                document.querySelector(app_id + ' .v-window-item--active').querySelectorAll('.link-item-inputs .v-input input')[3].value = '';
+
             } else {
                 alert('未登録のiconのためLinkに追加できません')
             }
@@ -636,9 +642,10 @@ var myvue = new Vue({
         // ★STEP7 ToDo 追加の処理
         doAdd: function(event, value) {
             // ref で名前を付けておいた要素を参照
-            var comment = this.$refs.comment
+            // var comment = this.$refs.comment
+            var comment = this.comment
             // 入力がなければ何もしないで return
-            if (!comment.value.length) {
+            if (!comment.length) {
                 return
             }
             // { 新しいID, コメント, 作業状態 }
@@ -646,11 +653,11 @@ var myvue = new Vue({
             // 作業状態「state」はデフォルト「作業中=0」で作成
             this.todos.push({
                 id: todoStorage.uid++,
-                comment: comment.value,
+                comment: comment,
                 state: 0
             })
             // フォーム要素を空にする
-            comment.value = ''
+            this.comment = ''
         },
 
         // ★STEP10 状態変更の処理
@@ -682,6 +689,14 @@ var myvue = new Vue({
     created() {
         // インスタンス作成時に自動的に fetch() する
         this.todos = todoStorage.fetch()
+        if (myStorage.fetch().length == 0) {
+            console.log('初期設定のままです')
+        } else {
+            this.apps  = myStorage.fetch()
+            this.apps.app_data[0]['link_input_icon'] = ''
+            this.apps.app_data[1]['link_input_icon'] = ''
+            this.apps.app_data[2]['link_input_icon'] = ''
+        }
     },
     computed: {
         // ★STEP12
@@ -710,17 +725,12 @@ var myvue = new Vue({
       // deep オプションでネストしているデータも監視できる
       deep: true
     },
-    ftabs: {
+    apps: {
         handler: function (val) {
-            myStorage.save('ftabs', val);
+            // myStorage.save('ftabs', val);
+            myStorage.save(this.apps)
         },
         deep:true
-    },
-    tabs: {
-        handler: function(val) {
-            myStorage.save('tabs', val);
-        },
-        deep: true
     }
   },
 });
